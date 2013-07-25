@@ -2,6 +2,7 @@
 
 #############################################################################
 #    montyhall.py - Monty Hall Problem solver
+#    v0.4
 #    Copyright (C) 2013  Ian Havelock
 #
 #   //http://en.wikipedia.org/wiki/Monty_Hall_problem
@@ -177,25 +178,25 @@ def store_result(simulation_id, no_of_doors, car_door,player_door, closed_door, 
 	CONN.commit()
 	
     
-def produce_results():
+def produce_results(simulation_id):
 	print "\n\n###################################\n"
 	print "RESULTS:"
 	cursor = CONN.cursor()
-	cursor.execute("SELECT count(*) from results where player_door = car_door")
+	cursor.execute("SELECT count(*) from results where player_door = car_door and simulation_id = {0}".format(simulation_id)
 	_res = cursor.fetchone()
 	_res = _res[0]
 	print "\nThe player chose the car {0} times.".format(format(int(_res), 'd'))
 	
-	cursor.execute("SELECT count(*) from results where switched = 1")
+	cursor.execute("SELECT count(*) from results where switched = 1 and simulation_id = {0}".format(simulation_id)
 	_res = cursor.fetchone()
 	_res = _res[0]    
 	print "The player switched doors {0} times.".format(format(int(_res), 'd'))
     
-	cursor.execute("select count(*) from results where car_door != player_door and switched = 1")
+	cursor.execute("select count(*) from results where car_door != player_door and switched = 1 and simulation_id = {0}".format(simulation_id)
 	_res = cursor.fetchone()
 	_result1 = _res[0]    
 	
-	cursor.execute("select count(*) from results where car_door == player_door and switched = 0")
+	cursor.execute("select count(*) from results where car_door == player_door and switched = 0 and simulation_id = {0}".format(simulation_id)
 	_res = cursor.fetchone()
 	_result2 = _res[0]
 	
