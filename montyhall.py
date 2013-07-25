@@ -40,6 +40,9 @@ CONN = sqlite3.connect('montyhall.sqlite3')
 
 # VARIABLES #################################################################
 
+
+# FUNCTIONS #################################################################
+
 def begin():
 	print "\n\n###########################"
 	print "Monty Hall Problem Solver"
