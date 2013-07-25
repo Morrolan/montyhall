@@ -116,6 +116,17 @@ def truncate_table():
 	
 def create_table():
 	cursor = CONN.cursor()
+	# creation_string = """
+						# CREATE TABLE [results] (
+						# [result_id] INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT, 
+						# [no_of_doors] INTEGER NOT NULL, 
+						# [player_door] INTEGER NOT NULL, 
+						# [car_door] INTEGER NOT NULL, 
+						# [closed_door] INTEGER NOT NULL,
+						# [switched] BOOLEAN NOT NULL,
+						# [won_car] BOOLEAN NOT NULL)
+						# """
+						
 	creation_string = """
 						CREATE TABLE [results] (
 						[result_id] INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT, 
@@ -123,8 +134,7 @@ def create_table():
 						[player_door] INTEGER NOT NULL, 
 						[car_door] INTEGER NOT NULL, 
 						[closed_door] INTEGER NOT NULL,
-						[switched] BOOLEAN NOT NULL,
-						[won_car] BOOLEAN NOT NULL)
+						[switched] BOOLEAN NOT NULL)
 						"""
 	cursor.execute(creation_string)	
 	
@@ -149,7 +159,7 @@ def calculate_1_run(arg_data):
 	# pick a door for the host to NOT open (cannot be player door)
 	closed_door = random.randint(1, no_of_doors)
 			
-	if car_door != player_door:
+	if player_door != car_door:
 		closed_door = car_door
 	else:
 		while closed_door == player_door:
@@ -159,27 +169,34 @@ def calculate_1_run(arg_data):
 	switch_decision = random.randint(0, 1)
 	
 	# # won the car or not?
-	if player_door == car_door and switch_decision == 0:
-		won_car = 1
-	elif player_door == car_door and switch_decision == 1:
-		won_car = 0
-	elif player_door != car_door and switch_decision == 0:
-		won_car = 0
-	elif player_door != car_door and switch_decision == 1:
-		won_car = 1
+	# if player_door == car_door and switch_decision == 0:
+		# won_car = 1
+	# elif player_door == car_door and switch_decision == 1:
+		# won_car = 0
+	# elif player_door != car_door and switch_decision == 0:
+		# won_car = 0
+	# elif player_door != car_door and switch_decision == 1:
+		# won_car = 1
 		
 	
 	# now lets save all of this to a database
-	store_result(no_of_doors, car_door,player_door, closed_door, switch_decision, won_car)
-	#store_result(no_of_doors, car_door,player_door, closed_door, 0, won_car)
+	#store_result(no_of_doors, car_door,player_door, closed_door, switch_decision, won_car)
+	store_result(no_of_doors, car_door,player_door, closed_door, switch_decision)
 	
 	
-def store_result(no_of_doors, car_door,player_door, closed_door, switch_decision, won_car):
+def store_result(no_of_doors, car_door,player_door, closed_door, switch_decision):
 	cursor = CONN.cursor()
 	cursor.execute("""INSERT INTO 'results' 
-					(no_of_doors, car_door, player_door, closed_door, switched, won_car) 
-					values (?, ?, ?, ?, ?, ?)""", (no_of_doors, car_door, player_door, closed_door, switch_decision, won_car))
+					(no_of_doors, car_door, player_door, closed_door, switched) 
+					values (?, ?, ?, ?, ?)""", (no_of_doors, car_door, player_door, closed_door, switch_decision))
 	CONN.commit()
+	
+# def store_result(no_of_doors, car_door,player_door, closed_door, switch_decision, won_car):
+	# cursor = CONN.cursor()
+	# cursor.execute("""INSERT INTO 'results' 
+					# (no_of_doors, car_door, player_door, closed_door, switched, won_car) 
+					# values (?, ?, ?, ?, ?, ?)""", (no_of_doors, car_door, player_door, closed_door, switch_decision, won_car))
+	# CONN.commit()
 	
     
 def produce_results():
@@ -196,10 +213,10 @@ def produce_results():
     _res = _res[0]    
     print "The player switched doors {0} times.".format(format(int(_res), 'd'))
     
-    cursor.execute("SELECT count(*) from results where won_car = 1")
-    _res = cursor.fetchone()
-    _res = _res[0]  
-    print "The player won the car {0} times.".format(format(int(_res), 'd'))
+    # cursor.execute("SELECT count(*) from results where won_car = 1")
+    # _res = cursor.fetchone()
+    # _res = _res[0]  
+    # print "The player won the car {0} times.".format(format(int(_res), 'd'))
     
     print "\n"
     
