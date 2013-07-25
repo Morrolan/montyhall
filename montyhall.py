@@ -65,7 +65,7 @@ def begin():
 		
 	print "\nFinished!"
 	
-	produce_results()
+	produce_results(sim_id)
 	# now lets analyze the results here
 	CONN.close()
 
