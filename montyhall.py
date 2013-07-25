@@ -113,7 +113,7 @@ def truncate_table():
 			cursor.execute(truncate_string)
 	else:
 		print "\nTable 'results' does not exist - creating structure..."
-        create_table()
+        	create_table()
 		
 	
 def create_table():
