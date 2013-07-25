@@ -50,15 +50,17 @@ def begin():
 	print "###########################"
 
 	arg_data = get_args()
-	truncate_table()
 	
-	print "\nRunning simulation..."
+	sim_id = generate_simulation_id()
+
+	print "\nRunning simulation ID: " + str(sim_id)
+	
 	
 	random.seed()
 	
 	# create a loop between 1 and number of runs
 	for i in range(0, int(arg_data['runs'])):
-		calculate_1_run(arg_data)
+		calculate_1_run(sim_id, arg_data)
 		
 	print "\nFinished!"
 	
@@ -76,7 +78,6 @@ def get_args():
 				'doors' : None,
 				'runs' : None,
 				'no_switch' : None,
-				
 				}
 
 	# Create the optional arguments
@@ -105,63 +106,40 @@ def get_args():
 		exit
 	
 	return arg_data
-
 	
-def truncate_table():
-	"""If the table exists, we want to truncate it.  Eventually we will replace
-		this and we will assign a 'simulation ID' to each row so we can easily
-		determine which simulation each row of data belongs to."""
-		
-	cursor = CONN.cursor()
-	check_string = "SELECT name FROM sqlite_master WHERE type='table' AND name='results'"
-	cursor.execute(check_string)
-	_result = cursor.fetchone()
-
-	
-	if _result is not None:
-		if 'results' in _result:
-			print "\nTruncating table 'results'..."
-			
-			truncate_string = "delete from results"
-			cursor.execute(truncate_string)
-	else:
-		print "\nTable 'results' does not exist - creating structure..."
-        	create_table()
-		
 	
 def create_table():
 	cursor = CONN.cursor()
-	# creation_string = """
-						# CREATE TABLE [results] (
-						# [result_id] INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT, 
-						# [no_of_doors] INTEGER NOT NULL, 
-						# [player_door] INTEGER NOT NULL, 
-						# [car_door] INTEGER NOT NULL, 
-						# [closed_door] INTEGER NOT NULL,
-						# [switched] BOOLEAN NOT NULL,
-						# [won_car] BOOLEAN NOT NULL)
-						# """
-						
 	creation_string = """
 						CREATE TABLE [results] (
 						[result_id] INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT, 
+						[simulation_id] INTEGER NOT NULL, 
 						[no_of_doors] INTEGER NOT NULL, 
 						[player_door] INTEGER NOT NULL, 
 						[car_door] INTEGER NOT NULL, 
-						[closed_door] INTEGER NOT NULL,
+						[closed_door] INTEGER NOT NULL, 
 						[switched] BOOLEAN NOT NULL)
 						"""
 	cursor.execute(creation_string)	
 	
 
-def calculate_1_run(arg_data):
+def generate_simulation_id():
+	cursor = CONN.cursor()
+	cursor.execute("SELECT simulation_id FROM results ORDER BY simulation_id DESC LIMIT 1")
+	last_sim_id = cursor.fetchone()[0]
+	
+	new_sim_id = last_sim_id + 1
+	
+	return new_sim_id
+	
+	
+def calculate_1_run(sim_id, arg_data):
 	# Initialise all variables to be zero
 	no_of_doors = int(arg_data['doors'])
 	car_door = None
 	player_door = None
 	closed_door = None
 	switch_decision = None
-	#won_car = None
 
 	# pick a door for the car
 	car_door = random.randint(1, no_of_doors)
@@ -187,36 +165,19 @@ def calculate_1_run(arg_data):
 		switch_decision = 1
 	elif arg_data['switch'] in 'nN':
 		switch_decision = 0
-	
-	# # won the car or not?
-	# if player_door == car_door and switch_decision == 0:
-		# won_car = 1
-	# elif player_door == car_door and switch_decision == 1:
-		# won_car = 0
-	# elif player_door != car_door and switch_decision == 0:
-		# won_car = 0
-	# elif player_door != car_door and switch_decision == 1:
-		# won_car = 1
 		
 	
 	# now lets save all of this to a database
 	#store_result(no_of_doors, car_door,player_door, closed_door, switch_decision, won_car)
-	store_result(no_of_doors, car_door,player_door, closed_door, switch_decision)
+	store_result(sim_id, no_of_doors, car_door,player_door, closed_door, switch_decision)
 	
 	
-def store_result(no_of_doors, car_door,player_door, closed_door, switch_decision):
+def store_result(simulation_id, no_of_doors, car_door,player_door, closed_door, switch_decision):
 	cursor = CONN.cursor()
 	cursor.execute("""INSERT INTO 'results' 
-					(no_of_doors, car_door, player_door, closed_door, switched) 
-					values (?, ?, ?, ?, ?)""", (no_of_doors, car_door, player_door, closed_door, switch_decision))
+					(simulation_id, no_of_doors, car_door, player_door, closed_door, switched) 
+					values (?, ?, ?, ?, ?, ?)""", (simulation_id, no_of_doors, car_door, player_door, closed_door, switch_decision))
 	CONN.commit()
-	
-# def store_result(no_of_doors, car_door,player_door, closed_door, switch_decision, won_car):
-	# cursor = CONN.cursor()
-	# cursor.execute("""INSERT INTO 'results' 
-					# (no_of_doors, car_door, player_door, closed_door, switched, won_car) 
-					# values (?, ?, ?, ?, ?, ?)""", (no_of_doors, car_door, player_door, closed_door, switch_decision, won_car))
-	# CONN.commit()
 	
     
 def produce_results():
@@ -236,20 +197,17 @@ def produce_results():
 	cursor.execute("select count(*) from results where car_door != player_door and switched = 1")
 	_res = cursor.fetchone()
 	_res1 = _res[0]    
+	#print "_res1:  " + str(_res1)
 	
 	cursor.execute("select count(*) from results where car_door == player_door and switched = 0")
 	_res = cursor.fetchone()
-	_res2 = _res[0]  
+	_res2 = _res[0]
+	#print "_res2:  " + str(_res2)
 	
 	_res = _res1 + _res2
 	
 	print "The player won the car {0} times.".format(format(int(_res), 'd'))
 	
-    # cursor.execute("SELECT count(*) from results where won_car = 1")
-    # _res = cursor.fetchone()
-    # _res = _res[0]  
-    # print "The player won the car {0} times.".format(format(int(_res), 'd'))
-
     
 def main():
 	begin()
