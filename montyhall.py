@@ -74,21 +74,36 @@ def get_args():
 	# to other functions.
 	arg_data = {
 				'doors' : None,
-				'runs' : None
+				'runs' : None,
+				'no_switch' : None,
+				
 				}
 
 	# Create the optional arguments
 	parser = argparse.ArgumentParser()
 	parser.add_argument("-d", "--doors", help="Optional parameter to override number of doors.", default=3)
 	parser.add_argument("-r", "--runs", help="Optional parameter to override the number of runs.", default=100)
+	parser.add_argument("-s", "--switch", help="The player switches or not - enter 'y' or 'n'.")
 	argu = parser.parse_args()
     
 	# assign the commandline arguments to the dictionary
 	arg_data['doors'] = argu.doors
 	arg_data['runs'] = argu.runs
+	arg_data['switch'] = argu.switch
 	
 	print "\nNumber of Doors:	" + str(format(int(argu.doors), ',d'))
 	print "Number of Runs:		" + str(format(int(argu.runs), ',d'))
+	
+	if argu.switch is None:
+		print "Player will randomly choose to switch."
+	elif argu.switch in 'yY':
+		print "Player will ALWAYS switch."
+	elif argu.switch in 'nN':
+		print "Player will NEVER switch."
+	elif argu.switch not in 'yYnN':
+		print "Invalid option specified."
+		exit
+	
 	return arg_data
 
 	
@@ -146,7 +161,7 @@ def calculate_1_run(arg_data):
 	player_door = None
 	closed_door = None
 	switch_decision = None
-	won_car = None
+	#won_car = None
 
 	# pick a door for the car
 	car_door = random.randint(1, no_of_doors)
@@ -166,7 +181,12 @@ def calculate_1_run(arg_data):
 			closed_door = random.randint(1, no_of_doors)
 			
 	# decide whether we switch or stick
-	switch_decision = random.randint(0, 1)
+	if arg_data['switch'] is None:
+		switch_decision = random.randint(0, 1)
+	elif arg_data['switch'] in 'yY':
+		switch_decision = 1
+	elif arg_data['switch'] in 'nN':
+		switch_decision = 0
 	
 	# # won the car or not?
 	# if player_door == car_door and switch_decision == 0:
@@ -200,25 +220,36 @@ def store_result(no_of_doors, car_door,player_door, closed_door, switch_decision
 	
     
 def produce_results():
-    print "\n\n###################################\n"
-    print "RESULTS:"
-    cursor = CONN.cursor()
-    cursor.execute("SELECT count(*) from results where player_door = car_door")
-    _res = cursor.fetchone()
-    _res = _res[0]
-    print "\nThe player chose the car {0} times.".format(format(int(_res), 'd'))
+	print "\n\n###################################\n"
+	print "RESULTS:"
+	cursor = CONN.cursor()
+	cursor.execute("SELECT count(*) from results where player_door = car_door")
+	_res = cursor.fetchone()
+	_res = _res[0]
+	print "\nThe player chose the car {0} times.".format(format(int(_res), 'd'))
 	
-    cursor.execute("SELECT count(*) from results where switched = 1")
-    _res = cursor.fetchone()
-    _res = _res[0]    
-    print "The player switched doors {0} times.".format(format(int(_res), 'd'))
+	cursor.execute("SELECT count(*) from results where switched = 1")
+	_res = cursor.fetchone()
+	_res = _res[0]    
+	print "The player switched doors {0} times.".format(format(int(_res), 'd'))
     
+	cursor.execute("select count(*) from results where car_door != player_door and switched = 1")
+	_res = cursor.fetchone()
+	_res1 = _res[0]    
+	
+	cursor.execute("select count(*) from results where car_door == player_door and switched = 0")
+	_res = cursor.fetchone()
+	_res2 = _res[0]  
+	
+	_res = _res1 + _res2
+	
+	print "The player won the car {0} times.".format(format(int(_res), 'd'))
+	
     # cursor.execute("SELECT count(*) from results where won_car = 1")
     # _res = cursor.fetchone()
     # _res = _res[0]  
     # print "The player won the car {0} times.".format(format(int(_res), 'd'))
-    
-    print "\n"
+
     
 def main():
 	begin()
