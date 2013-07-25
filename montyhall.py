@@ -143,11 +143,9 @@ def calculate_1_run(sim_id, arg_data):
 
 	# pick a door for the car
 	car_door = random.randint(1, no_of_doors)
-	#print car_door
 	
 	# pick a door for the player
 	player_door = random.randint(1, no_of_doors)
-	#print player_door
 	
 	# pick a door for the host to NOT open (cannot be player door)
 	closed_door = random.randint(1, no_of_doors)
@@ -168,7 +166,6 @@ def calculate_1_run(sim_id, arg_data):
 		
 	
 	# now lets save all of this to a database
-	#store_result(no_of_doors, car_door,player_door, closed_door, switch_decision, won_car)
 	store_result(sim_id, no_of_doors, car_door,player_door, closed_door, switch_decision)
 	
 	
@@ -196,15 +193,13 @@ def produce_results():
     
 	cursor.execute("select count(*) from results where car_door != player_door and switched = 1")
 	_res = cursor.fetchone()
-	_res1 = _res[0]    
-	#print "_res1:  " + str(_res1)
+	_result1 = _res[0]    
 	
 	cursor.execute("select count(*) from results where car_door == player_door and switched = 0")
 	_res = cursor.fetchone()
-	_res2 = _res[0]
-	#print "_res2:  " + str(_res2)
+	_result2 = _res[0]
 	
-	_res = _res1 + _res2
+	_res = _result1 + _result2
 	
 	print "The player won the car {0} times.".format(format(int(_res), 'd'))
 	
