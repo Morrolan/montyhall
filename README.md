@@ -37,4 +37,6 @@ To demonstrate how to run the simulation overriding all defaults:
 
 ```
  > python montyhall.py --switch y --doors 5 --runs 10000 
- ```
+```
+
+By default, the player decides to switch doors based on the toss of a die, i.e. a 0 or 1 probability chance.  However, this essentially means that the player is ignoring the a-priori information from the host(stupid player).  In order to actually test the probability taking the a-priori information into account, you need to override the decision with the -s parameter.
