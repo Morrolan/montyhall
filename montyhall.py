@@ -51,7 +51,7 @@ def begin():
 	print "###########################"
 
 	arg_data = get_args()
-	
+	check_exists()
 	sim_id = generate_simulation_id()
 
 	print "\nRunning simulation ID: " + str(sim_id)
@@ -109,6 +109,18 @@ def get_args():
 	return arg_data
 	
 	
+def check_exists():
+	cursor = CONN.cursor()
+	test_string = """
+					SELECT name FROM sqlite_master WHERE type='table' AND name='results'
+					"""
+	cursor.execute(test_string)	
+	a = cursor.fetchall()
+	
+	if a == []:
+		create_table()
+	
+	
 def create_table():
 	cursor = CONN.cursor()
 	creation_string = """
@@ -127,9 +139,12 @@ def create_table():
 def generate_simulation_id():
 	cursor = CONN.cursor()
 	cursor.execute("SELECT simulation_id FROM results ORDER BY simulation_id DESC LIMIT 1")
-	last_sim_id = cursor.fetchone()[0]
+	last_sim_id = cursor.fetchone()
 	
-	new_sim_id = last_sim_id + 1
+	if last_sim_id is not None:
+		new_sim_id = int(last_sim_id[0]) + 1
+	else:
+		new_sim_id = 1
 	
 	return new_sim_id
 	
